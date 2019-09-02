@@ -1,0 +1,24 @@
+#!/bin/bash
+stamp=$((RANDOM%1000))
+if [ ! -z "$(grep -i tiktok <<< $1)" ]; then
+url=$(curl -s -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" -H "Accept-Encoding: " -H "Accept-Langauge: en-US,en;q=0.5" -H "Connection: keep-alive" -H "Host: www.tiktok.com" -H "Upgrade-Insecure-Requests: 1" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0" $1)
+url=$(sed -z 's/.*urls\"\:\[//' <<< $url | sed 's/\].*//' | tr -d '\"')
+if [ ! -z "$url" ]; then
+while [ $(wc -l <<< $url) -gt 1 ]
+	do
+		url=$(sed '2d' <<< $url)
+done
+size=$(curl -sI $url | grep -i Content-Length | sed 's/.* //')
+size=$(tr -d '\r' <<< $size)
+	if [ ${#size} -gt 9 ]; then
+        size=$(($size/1073741824))
+        ext="Gb"
+    else
+        size=$(($size/1048576))
+        ext="Mb"
+    fi
+size="$size $ext"
+echo "Video Size: $size"
+curl -s $url -o file.mp4
+fi
+fi

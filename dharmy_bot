@@ -1,0 +1,129 @@
+#!/bin/bash
+
+# DharmyBot Current Version
+version=1.0
+token=607618635:AAH20pMq7gA_tJV6l0jx4HxTaA1D09WP16M
+interval=3
+getUserDetails(){
+	delim="$1"
+	shift
+	url="$(sed 's@\"@@g' <<< $1)"
+	url="$(sed 's@.*chat\"\:@@' <<< $url | tr -d '}' | tr -d '{' | tr -d ']')"
+	shift
+	echo $(sed 's@.*'$delim'\:@@' <<< "$url" | sed 's@\,.*@@')
+}
+declare -A commands
+commands=(
+		["myid"]="echo Your User ID is: @USERID"
+		["myuser"]="echo Your Username is: @USERNAME"
+		["fetchmail"]="./mail_fetch"
+		["/start"]="echo Hola, $1"
+		["tikdown"]="./tikdown"
+)
+
+FIRSTRUN=0
+
+echo "+"
+echo -e "\nInitializing Dharmy_bot v$version"
+ME=$(curl -s "https://api.telegram.org/bot$token/getMe")
+if [ ! -z $(echo $ME | grep \"ok\"\:true) ]; then
+	ME=$(tr -d "{" <<< $ME| tr -d "}" | tr -d '\"')
+			USERNAME=$(sed 's@.*username\:@@' <<< $ME)
+			echo Username: $USERNAME
+			NAME=$(sed 's@.*first_name\:@@' <<< $ME | sed 's@\,.*@@')
+			echo Name: $NAME
+			ID=$(sed 's@.*id\:@@' <<< $ME | sed 's@\,..*@@')
+			echo ID: $ID
+else
+	echo "Error: Network Issues Or Invalid Token"
+	exit 1
+fi
+
+if [ -f $ID.lastupdate ]; then
+	firstime=1
+else
+	echo 0 > $ID.lastupdate
+	firstime=0
+fi
+
+echo -e "Initialization Done: Waiting For New Messages......\n"
+echo ""
+LastMsgId=0
+prev_ChatId=0
+run_command(){
+		${commands[$command]} $1
+		return
+}
+check_valid(){
+		text="$1"
+		shift
+		Username="$1"
+		shift
+		Chat_Id="$1"
+
+		for command in "${!commands[@]}"; do
+		if [[ "$text" =~ "$command" ]]; then
+			case $text in
+		*"fetchmail"*) arg=$(sed 's@.*fetchmail@@' <<< $text | sed 's/ //')
+						if [ -z $arg ]; then
+			  			curl -s -d "text=No Arguments Sent, Please Add An Argument And Try Again e.g /fetchmail johndoe@example.com:12345" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+						return
+						else
+						run_command $arg
+						if [ -f Your_Mail ]; then
+						curl -s -d "text=Hi, $Username \n Here's Your Mail Update" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+						curl -s -F document=@"Your_Mail" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
+						rm -rf Your_Mail
+						else
+						curl -s -d "text=There's Been An Issue With Your Request, Verify Your Credentials And Make Sure You Have Turned On Access For Less Secure Apps" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+						fi
+						fi
+						return
+					;;
+	*"tikdown"*) arg=$(sed 's@.*tikdown @@' <<< $text | sed 's/ //')
+				if [ -z $arg ]; then
+				curl -s -d "text=No Link Specified, Re-run The Command With A Valid Tiktok Link" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				return
+				else
+				curl -s -d "text=Your File Is Downloading, It Will Get Sent To You In A Moment" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				run_command $arg
+				if [ -f file.mp4 ]; then
+				curl -s -F video=@"file.mp4" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendVideo" >/dev/null 2>&1
+				curl -s -d "text=Here You Go $Username" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				rm -rf file.mp4
+				else
+				curl -s -d "text=There's Been An Issue With Your Request, Verify The Link And Try Again" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				fi
+				fi
+				return
+				;;
+	*"start"*) run_command $Username; return;;
+	*)	run_command;return;;
+#			echo "$command Received, Running '${commands[$command]}'"
+		esac
+	fi
+done
+}
+while :
+	do
+		NEW_MSG=$(curl --silent "https://api.telegram.org/bot$token/getUpdates" | sed '1d')
+		while read -r msg || [[ -n $msg ]]; do
+				if [ $firstime -eq 1 ]; then
+					read -r update < $ID.lastupdate
+				else
+					update=0
+				fi
+			MsgId=$(sed 's@.*message_id\"\:@@' <<< $msg | tr -d '}' | tr -d '{' | tr -d '\"' | tr -d ']' | sed 's|\,.*||')
+			if [ $MsgId -gt $update ]; then
+			echo $MsgId > $ID.lastupdate
+			Username=$(getUserDetails first_name $msg)
+			Text=$(getUserDetails text "$msg")
+			Chat_Id=$(getUserDetails id $msg)
+#			LastMsgId=$(sed 's@.*message_id\"\:@@' <<< $msg | tr -d '}' | tr -d '{' | tr -d '\"' | tr -d ']' | sed 's|\,.*||')
+			echo "Message From $Username: $Text"
+			check_valid "$Text" $Username $Chat_Id
+			fi
+		done <<< $NEW_MSG
+	sleep $interval
+done
+
