@@ -16,9 +16,9 @@ declare -A commands
 commands=(
 		["myid"]="echo Your User ID is: @USERID"
 		["myuser"]="echo Your Username is: @USERNAME"
-		["fetchmail"]="./mail_fetch"
+		["fetchmail"]="./bin/mail_fetch"
 		["/start"]="echo Hola, $1"
-		["tikdown"]="./tikdown"
+		["tikdown"]="./bin/tikdown"
 )
 
 FIRSTRUN=0
