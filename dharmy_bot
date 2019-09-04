@@ -107,6 +107,7 @@ done
 while :
 	do
 		NEW_MSG=$(curl --silent "https://api.telegram.org/bot$token/getUpdates" | sed '1d')
+		if [ ! -z "$NEW_MSG" ]; then
 		while read -r msg || [[ -n $msg ]]; do
 				if [ $firstime -eq 1 ]; then
 					read -r update < $ID.lastupdate
@@ -124,6 +125,7 @@ while :
 			check_valid "$Text" $Username $Chat_Id
 			fi
 		done <<< $NEW_MSG
+		fi
 	sleep $interval
 done
 
