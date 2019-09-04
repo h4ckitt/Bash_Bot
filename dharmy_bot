@@ -2,7 +2,7 @@
 
 # DharmyBot Current Version
 version=1.0
-token=607618635:AAH20pMq7gA_tJV6l0jx4HxTaA1D09WP16M
+token=<"Your Token Here">
 interval=3
 getUserDetails(){
 	delim="$1"
@@ -71,7 +71,7 @@ check_valid(){
 						else
 						run_command $arg
 						if [ -f Your_Mail ]; then
-						curl -s -d "text=Hi, $Username \n Here's Your Mail Update" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+						curl -s -d "text=Hi, $Username, Here's Your Mail Update" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 						curl -s -F document=@"Your_Mail" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
 						rm -rf Your_Mail
 						else
