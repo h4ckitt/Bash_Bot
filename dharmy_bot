@@ -4,7 +4,7 @@
 version=2.1
 
 #Bot Token
-token="<token here>"
+token="607618635:AAFqgMoRW3xt554HJ8e-XkYbjxktirCZTgg"
 
 #Check Interval
 interval=3
@@ -66,7 +66,7 @@ check_valid(){
 		shift
 		Username="$1"
 		shift
-		Chat_Id="$1"
+		export Chat_Id="$1"
 		for command in "${!commands[@]}"; do
 		if [[ "$( tr '[:upper:]' '[:lower:]' <<< $text)" =~ "$command" ]]; then
 			case $text in
@@ -110,17 +110,17 @@ check_valid(){
 				else
 				case $(tr '[:upper:]' '[:lower:]' <<< $arg) in
 				"register")
-				if [ -f "./docs/unilag_cred" ]; then
-				read -r this_user < ./docs/unilag_cred
+				if [ -f "./docs/$Chat_Id-unilag_cred" ]; then
+				read -r this_user < ./docs/$Chat_Id-unilag_cred
 				curl -s -d "text=Overriding Credentials For $this_user" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				fi
 				curl -s -d "text=What Is Your Username/Matric-Number?" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				unilag_user=$(get_updates response)
-				echo $(sed 's@|.*@@' <<< $unilag_user | sed 's/[[:space:]]//g') > ./docs/unilag_cred
+				echo $(sed 's@|.*@@' <<< $unilag_user | sed 's/[[:space:]]//g') > ./docs/$Chat_Id-unilag_cred
 				user_id=$(sed 's@.*|@@' <<< $unilag_user | sed 's/[[:space:]]//g')
 				curl -s -d "text=Great, Now What's Your Password?" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				unilag_password=$(get_updates response)
-				echo $(sed 's@|.*@@' <<< $unilag_password | sed 's/[[:space:]]//g') >> ./docs/unilag_cred
+				echo $(sed 's@|.*@@' <<< $unilag_password | sed 's/[[:space:]]//g') >> ./docs/$Chat_Id-unilag_cred
 				password_id=$(sed 's@.*|@@' <<< $unilag_password | sed 's/[[:space:]]//g')
 				curl -s -d "text=Skidaddle Skidoodle, Your Credentials Are Now Noodles %F0%9F%8D%9D" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				for i in $user_id $password_id
@@ -129,7 +129,7 @@ check_valid(){
 				done
 				;;
 				"courseform")
-				if [ ! -f "./docs/unilag_cred" ]; then
+				if [ ! -f "./docs/$Chat_Id-unilag_cred" ]; then
 				curl -s -d "text=Whoops, You Don't Seem To Have Registered Your Credentials Yet, Use /unilag register To Get Started" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				return
 				fi
