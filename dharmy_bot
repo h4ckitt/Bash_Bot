@@ -2,7 +2,11 @@
 
 # DharmyBot Current Version
 version=1.0
-token=<"Your Token Here">
+
+#Bot Token
+token=607618635:AAFDSZuXgRSpMtZ52HUV2IQb7rcsZ4QH37A
+
+#Check Interval
 interval=3
 getUserDetails(){
 	delim="$1"
@@ -15,10 +19,13 @@ getUserDetails(){
 declare -A commands
 commands=(
 		["myid"]="echo Your User ID is: @USERID"
+		["hi"]="echo Hello, $1"
 		["myuser"]="echo Your Username is: @USERNAME"
 		["fetchmail"]="./bin/mail_fetch"
-		["/start"]="echo Hola, $1"
+		["start"]="echo Hola, $1"
+		["help"]="echo Hiyah, $1"
 		["tikdown"]="./bin/tikdown"
+		["unilag"]="./bin/Autologin "$@""
 )
 
 FIRSTRUN=0
@@ -60,9 +67,8 @@ check_valid(){
 		Username="$1"
 		shift
 		Chat_Id="$1"
-
 		for command in "${!commands[@]}"; do
-		if [[ "$text" =~ "$command" ]]; then
+		if [[ "$( tr '[:upper:]' '[:lower:]' <<< $text)" =~ "$command" ]]; then
 			case $text in
 		*"fetchmail"*) arg=$(sed 's@.*fetchmail@@' <<< $text | sed 's/ //')
 						if [ -z $arg ]; then
@@ -80,7 +86,7 @@ check_valid(){
 						fi
 						return
 					;;
-	*"tikdown"*) arg=$(sed 's@.*tikdown @@' <<< $text | sed 's/ //')
+	*"tikdown"*) arg=$(sed 's@.*tikdown@@' <<< $text | sed 's/ //')
 				if [ -z $arg ]; then
 				curl -s -d "text=No Link Specified, Re-run The Command With A Valid Tiktok Link" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				return
@@ -97,13 +103,63 @@ check_valid(){
 				fi
 				return
 				;;
-	*"start"*) run_command $Username; return;;
-	*)	run_command;return;;
+	*"unilag"*) arg=$(sed 's|.*unilag||' <<< $text | sed 's| ||')
+				if [ -z $arg ]; then
+				curl -s -d "text=No Arguments Sent, Please Add An Argument Or Check The Help Text With /help And Try Again" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				return
+				else
+				case $(tr '[:upper:]' '[:lower:]' <<< $arg) in
+				"register")
+				if [ -f "./docs/unilag_cred" ]; then
+				read -r this_user < ./docs/unilag_cred
+				curl -s -d "text=Overriding Credentials For $this_user" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				fi
+				curl -s -d "text=What Is Your Username/Matric-Number?" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				unilag_user=$(get_updates response)
+				echo $(sed 's@|.*@@' <<< $unilag_user | sed 's/[[:space:]]//g') > ./docs/unilag_cred
+				user_id=$(sed 's@.*|@@' <<< $unilag_user | sed 's/[[:space:]]//g')
+				curl -s -d "text=Great, Now What's Your Password?" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				unilag_password=$(get_updates response)
+				echo $(sed 's@|.*@@' <<< $unilag_password | sed 's/[[:space:]]//g') >> ./docs/unilag_cred
+				password_id=$(sed 's@.*|@@' <<< $unilag_password | sed 's/[[:space:]]//g')
+				curl -s -d "text=Skidaddle Skidoodle, Your Credentials Are Now Noodles %F0%9F%8D%9D" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				for i in $user_id $password_id
+					do
+						curl -s -d "message_id=$i" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/deleteMessage" >/dev/null 2>&1
+				done
+				;;
+				"courseform")
+				if [ ! -f "./docs/unilag_cred" ]; then
+				curl -s -d "text=Whoops, You Don't Seem To Have Registered Your Credentials Yet, Use /unilag register To Get Started" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				return
+				fi
+				run_command $arg
+				x=$(cat temp)
+				curl -s -d "text=$x" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				curl -s -d "text=Choose A Session And Semester i.e The Number In Front Of The Choices" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				x=$(get_updates response)
+				x=$(sed 's@|.*@@' <<< $x | sed 's/[[:space:]]//g')
+				run_command $x
+				if [ -f CourseRegistration.pdf ]; then
+				curl -s -d "text=Yo Chief, Here's Your Course Form" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				curl -s -F document=@"CourseRegistration.pdf" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
+				rm -rf CourseRegistration.pdf
+				fi
+				;;
+				*) curl -s -d "text=That Definitely Is Not A Valid Argument, Use /help To See The Help Text For More Info On Usage" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;;
+				esac
+				fi
+				return
+				;;
+	*"start"*) res=$(run_command $Username; cat ./docs/help_text); curl -s -d "text=$res" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1; return;;
+	*"help"*)  res=$(run_command $Username; cat ./docs/help_text); curl -s -d "text=$res" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1; return;;
+	*)	response=$(run_command $Username); curl -s -d "text=$response" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;return;;
 #			echo "$command Received, Running '${commands[$command]}'"
 		esac
 	fi
 done
 }
+get_updates(){
 while :
 	do
 		NEW_MSG=$(curl --silent "https://api.telegram.org/bot$token/getUpdates" | sed '1d')
@@ -120,12 +176,18 @@ while :
 			Username=$(getUserDetails first_name $msg)
 			Text=$(getUserDetails text "$msg")
 			Chat_Id=$(getUserDetails id $msg)
-#			LastMsgId=$(sed 's@.*message_id\"\:@@' <<< $msg | tr -d '}' | tr -d '{' | tr -d '\"' | tr -d ']' | sed 's|\,.*||')
+			LastMsgId=$(sed 's@.*message_id\"\:@@' <<< $msg | tr -d '}' | tr -d '{' | tr -d '\"' | tr -d ']' | sed 's|\,.*||')
+			if [ -z "$1" ]; then
 			echo "Message From $Username: $Text"
 			check_valid "$Text" $Username $Chat_Id
+			else
+			echo "$Text|$MsgId"
+			return
+			fi
 			fi
 		done <<< $NEW_MSG
 		fi
 	sleep $interval
 done
-
+}
+get_updates
