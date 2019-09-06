@@ -1,0 +1,48 @@
+#!/bin/bash
+
+username="$(sed '2d' ./docs/unilag_cred)"
+pass="$(sed '1d' ./docs/unilag_cred)"
+url=$(curl -s "http://studentportal.unilag.edu.ng/(S(lkynzhoc3fox21jdy343vwl0))/default.aspx")
+declare -i counter=1
+while read -r line || [[ -n $line ]]
+    do
+        if [ -z "$(grep -i "object moved to" <<< $line)" ]; then
+            url=$(sed ''$counter'd' <<< $url)
+            counter=1
+        fi
+    counter+=1
+done <<< $url
+urrl=$(sed 's/.*href\=\"//' <<< $url | sed 's/\".*//' | sed 's@<.*@@' | sed 's@\/default.*@@')
+viewstate=$(curl -s "http://studentportal.unilag.edu.ng$urrl/default.aspx" | grep -i viewstate| sed '2d' | sed 's|.*value\=\"||' | sed 's@\".*@@')
+viewgen=$(curl -s "http://studentportal.unilag.edu.ng$urrl/default.aspx" | grep -i viewstate| sed '1d' | sed 's|.*value\=\"||' | sed 's@\".*@@')
+event_validation=$(curl -s "http://studentportal.unilag.edu.ng$urrl/default.aspx" | grep -i eventvalidation | sed 's|.*value\=\"||' | sed 's@\".*@@')
+curl -D - -s -H 'Connection: keep-alive' -H 'Cache-Control: max-age=0' -H 'Origin: http://studentportal.unilag.edu.ng' -H 'Upgrade-Insecure-Requests: 1' -H 'Content-Type: application/x-www-form-urlencoded' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.71 Safari/537.36' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3' -H 'Referer: http://studentportal.unilag.edu.ng/(S(lkynzhoc3fox21jdy343vwl0))/default.aspx' -H 'Accept-Encoding: gzip, deflate' -H 'Accept-Language: en-US,en;q=0.9' --data-urlencode "PasswordTextBox=$pass" --data-urlencode "UsernameTextBox=$username" --data-urlencode "__EVENTVALIDATION=$event_validation" --data-urlencode "__VIEWSTATE=$viewstate" --data-urlencode "__VIEWSTATEGENERATOR=$viewgen" "http://studentportal.unilag.edu.ng$urrl/StudentLoginPage.aspx" --compressed --insecure > header
+cookie=$(cat header | grep -i cookie | sed 's@.*Set-Cookie\: @@' | sed 's@\;.*@@')
+rm header
+#curl -s -L -H "Cookie: $cookie" -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" -H "Accept-Encoding: " -H "Accept-Langauge: en-US,en;q=0.5" -H "Connection: keep-alive" -H "Host: studentportal.unilag.edu.ng" -H "Upgrade-Insecure-Requests: 1" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"  "http://studentportal.unilag.edu.ng$urrl/StudentHomePage.aspx" > check.html
+if [ "$1" == "courseform" -o -f temp ]; then
+reg=$(curl -s -L -H "Cookie: $cookie" -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" -H "Accept-Encoding: " -H "Accept-Langauge: en-US,en;q=0.5" -H "Connection: keep-alive" -H "Host: studentportal.unilag.edu.ng" -H "Upgrade-Insecure-Requests: 1" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"  "http://studentportal.unilag.edu.ng$urrl/RegistrationListPage.aspx")
+if [ ! -f temp ]; then
+echo "Choose Course Registration To Download" >> temp
+echo "" >> temp
+fi
+declare -i counter=1
+z=()
+while read -r list || [[ -n $list ]]
+    do
+#       declare -i counter=1
+        if [ ! -z "$(grep "session" <<< $list)" ]; then
+            x=$(sed 's|.*?||' <<< $list | sed 's|\".*||')
+            z+=($x)
+            x=$(echo $x | tr '&' ' ')
+            echo "$counter. $x" >> temp
+            counter+=1
+        fi
+done <<< $reg
+if [[ $1 =~ [[:digit:]] ]]; then
+y=$(echo ${z[$(($1-1))]})
+url="PrintRegistrationPage.aspx?$y"
+curl -s -L -H "Cookie: $cookie" -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" -H "Accept-Encoding: " -H "Accept-Langauge: en-US,en;q=0.5" -H "Connection: keep-alive" -H "Host: studentportal.unilag.edu.ng" -H "Upgrade-Insecure-Requests: 1" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"  "http://studentportal.unilag.edu.ng$urrl/$url" -o CourseRegistration.pdf
+rm -rf temp
+fi
+fi
