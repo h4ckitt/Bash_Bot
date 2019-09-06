@@ -4,7 +4,7 @@
 version=2.1
 
 #Bot Token
-token=607618635:AAFDSZuXgRSpMtZ52HUV2IQb7rcsZ4QH37A
+token="<token here>"
 
 #Check Interval
 interval=3
