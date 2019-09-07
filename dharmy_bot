@@ -1,21 +1,12 @@
 #!/bin/bash
 
-# DharmyBot Current Version
-version=2.1
-
-#Bot Token
-token="<your Token Here>"
-
-#Check Interval
-interval=3
-getUserDetails(){
-	delim="$1"
-	shift
-	url="$(sed 's@\"@@g' <<< $1)"
-	url="$(sed 's@.*chat\"\:@@' <<< $url | tr -d '}' | tr -d '{' | tr -d ']')"
-	shift
-	echo $(sed 's@.*'$delim'\:@@' <<< "$url" | sed 's@\,.*@@')
-}
+#Chat Id
+Chat_Id=$1
+set --
+[ ! -z $Chat_Id ] || {
+	echo "No Chat Id Specified, Exiting"
+	exit 1
+	}
 declare -A commands
 commands=(
 		["myid"]="echo Your User ID is: @USERID"
@@ -29,34 +20,25 @@ commands=(
 )
 
 FIRSTRUN=0
-
-echo "+"
-echo -e "\nInitializing Dharmy_bot v$version"
-ME=$(curl -s "https://api.telegram.org/bot$token/getMe")
-if [ ! -z $(echo $ME | grep \"ok\"\:true) ]; then
-	ME=$(tr -d "{" <<< $ME| tr -d "}" | tr -d '\"')
-			USERNAME=$(sed 's@.*username\:@@' <<< $ME)
-			echo Username: $USERNAME
-			NAME=$(sed 's@.*first_name\:@@' <<< $ME | sed 's@\,.*@@')
-			echo Name: $NAME
-			ID=$(sed 's@.*id\:@@' <<< $ME | sed 's@\,..*@@')
-			echo ID: $ID
-else
-	echo "Error: Network Issues Or Invalid Token"
-	exit 1
-fi
-
-if [ -f $ID.lastupdate ]; then
+if [ -f $Chat_Id.lastupdate ]; then
 	firstime=1
 else
-	echo 0 > $ID.lastupdate
+	echo 0 > $Chat_Id.lastupdate
 	firstime=0
 fi
 
-echo -e "Initialization Done: Waiting For New Messages......\n"
+echo -e "New Session Started For $Chat_Id......\n"
 echo ""
 LastMsgId=0
 prev_ChatId=0
+getUserDetails(){
+    delim="$1"
+    shift
+    url="$(sed 's@\"@@g' <<< $1)"
+    url="$(sed 's@.*chat\"\:@@' <<< $url | tr -d '}' | tr -d '{' | tr -d ']')"
+    shift
+    echo $(sed 's@.*'$delim'\:@@' <<< "$url" | sed 's@\,.*@@')
+}
 run_command(){
 		${commands[$command]} $1
 		return
@@ -166,23 +148,25 @@ while :
 		if [ ! -z "$NEW_MSG" ]; then
 		while read -r msg || [[ -n $msg ]]; do
 				if [ $firstime -eq 1 ]; then
-					read -r update < $ID.lastupdate
+					read -r update < $Chat_Id.lastupdate
 				else
 					update=0
 				fi
+			msg_Chat_Id=$(getUserDetails id $msg)
+			if [ $msg_Chat_Id -eq $Chat_Id ]; then
 			MsgId=$(sed 's@.*message_id\"\:@@' <<< $msg | tr -d '}' | tr -d '{' | tr -d '\"' | tr -d ']' | sed 's|\,.*||')
 			if [ $MsgId -gt $update ]; then
-			echo $MsgId > $ID.lastupdate
+			echo $MsgId > $Chat_Id.lastupdate
 			Username=$(getUserDetails first_name $msg)
 			Text=$(getUserDetails text "$msg")
-			Chat_Id=$(getUserDetails id $msg)
 			LastMsgId=$(sed 's@.*message_id\"\:@@' <<< $msg | tr -d '}' | tr -d '{' | tr -d '\"' | tr -d ']' | sed 's|\,.*||')
 			if [ -z "$1" ]; then
 			echo "Message From $Username: $Text"
-			check_valid "$Text" $Username $Chat_Id
+			check_valid "$Text" $Username $msg_Chat_Id
 			else
 			echo "$Text|$MsgId"
 			return
+			fi
 			fi
 			fi
 		done <<< $NEW_MSG
