@@ -104,7 +104,7 @@ check_valid(){
 				unilag_password=$(get_updates response)
 				echo $(sed 's@|.*@@' <<< $unilag_password | sed 's/[[:space:]]//g') >> ./docs/$Chat_Id-unilag_cred
 				password_id=$(sed 's@.*|@@' <<< $unilag_password | sed 's/[[:space:]]//g')
-				curl -s -d "text=Skidaddle Skidoodle, Your Credentials Are Now Noodles %F0%9F%8D%9D" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				curl -s -d "text=Skidaddle Skidoodle, Your Credentials Are Now Noodles %F0%9F%8D%9D .........., Just Kidding, Your Credentials Are Saved Already." -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				for i in $user_id $password_id
 					do
 						curl -s -d "message_id=$i" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/deleteMessage" >/dev/null 2>&1
@@ -121,11 +121,18 @@ check_valid(){
 				curl -s -d "text=Choose A Session And Semester i.e The Number In Front Of The Choices" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				x=$(get_updates response)
 				x=$(sed 's@|.*@@' <<< $x | sed 's/[[:space:]]//g')
+				curl -s -d "text=Please Chillabit While I Go Fetch It." -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				run_command $x
-				if [ -f CourseRegistration.pdf ]; then
-				curl -s -d "text=Yo Chief, Here's Your Course Form" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				if [ -f $Chat_Id-CourseRegistration.pdf ]; then
+				curl -s -d "text=Got It, Here's Your Course Form" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				curl -s -F document=@"CourseRegistration.pdf" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
 				rm -rf CourseRegistration.pdf
+				fi
+				;;
+				"result")
+				if [ ! -f "./docs/$Chat_Id-unilag_cred" ]; then
+				curl -s -d "text=Whoops, You Don't Seem To Have Registered Your Credentials Yet, Use /unilag register To Get Started" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				return
 				fi
 				;;
 				*) curl -s -d "text=That Definitely Is Not A Valid Argument, Use /help To See The Help Text For More Info On Usage" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;;
