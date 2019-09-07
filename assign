@@ -23,6 +23,12 @@ else
     echo "Error: Network Issues Or Invalid Token"
     exit 1
 fi
+[ -f "./docs/UIDs" ] || touch "./docs/UIDs"
+while read -r id || [[ -n $id ]]; do
+	echo "Starting Session For $id"
+	./dharmy_bot $id &
+done
+exit
 echo -e "Initialization Done: Hunting For New Chat Ids"
 getUserDetails(){
     delim="$1"
@@ -32,7 +38,6 @@ getUserDetails(){
     shift
     echo $(sed 's@.*\<'$delim'\>\:@@' <<< "$url" | sed 's@\,.*@@')
 }
-[ -f "./docs/UIDs" ] || touch "./docs/UIDs"
 while :
 	do
 nw_msg=$(curl --silent "https://api.telegram.org/bot$token/getUpdates" | sed '1d')
