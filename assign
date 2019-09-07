@@ -27,8 +27,7 @@ fi
 while read -r id || [[ -n $id ]]; do
 	echo "Starting Session For $id"
 	./dharmy_bot $id &
-done
-exit
+done < "./docs/UIDs"
 echo -e "Initialization Done: Hunting For New Chat Ids"
 getUserDetails(){
     delim="$1"
