@@ -160,7 +160,7 @@ check_valid(){
 				fi
 				return
 				;;
-	*"start"*) res=$(run_command $Username; if [ ! $(cat updates/$Chat_Id.lastupdate) -gt 1 ]; then cat ./docs/help_text; fi); curl -s -d "text=$res" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1; return;;
+	*"start"*) res=$(run_command $Username; if [ $(cat updates/$Chat_Id.lastupdate) -eq 1 ]; then cat ./docs/help_text; echo "Use /help To Access This Help Text Again";fi); curl -s -d "text=$res" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1; return;;
 	*"help"*)  res=$(run_command $Username; cat ./docs/help_text); curl -s -d "text=$res" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1; return;;
 	*)	response=$(run_command $Username); curl -s -d "text=$response" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;return;;
 #			echo "$command Received, Running '${commands[$command]}'"
