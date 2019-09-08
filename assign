@@ -3,7 +3,7 @@
 version=2.1
 
 #Bot Token
-export token="<Your Token Here>"
+export token="<Your Token Here"
 
 #Check Interval
 export interval=3
