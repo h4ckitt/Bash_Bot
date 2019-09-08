@@ -24,6 +24,9 @@ FIRSTRUN=0
 if [ ! -f updates/$Chat_Id.lastupdate ]; then
 	echo 0 > updates/$Chat_Id.lastupdate
 fi
+[ -d docs/creds/$Chat_Id ] || mkdir docs/creds/$Chat_Id
+[ -d output ] || mkdir output
+[ -d output/$Chat_Id ] || mkdir output/$Chat_Id
 
 echo -e "New Session Started For $Chat_Id......\n"
 echo ""
@@ -49,20 +52,44 @@ check_valid(){
 		export Chat_Id="$1"
 		for command in "${!commands[@]}"; do
 		if [[ "$( tr '[:upper:]' '[:lower:]' <<< $text)" =~ "$command" ]]; then
-			case $text in
+			case $(tr '[:upper:]' '[:lower:]' <<< $text) in
 		*"fetchmail"*) arg=$(sed 's@.*fetchmail@@' <<< $text | sed 's/ //')
 						if [ -z $arg ]; then
-			  			curl -s -d "text=No Arguments Sent, Please Add An Argument And Try Again e.g /fetchmail johndoe@example.com:12345" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+						if [ ! -f "./docs/creds/$Chat_Id/gmail_cred" ]; then
+						curl -s -d "text=Whoops, You Don't Seem To Have Registered Your Credentials Yet, Use /fetchmail register To Get Started" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 						return
-						else
-						run_command $arg
-						if [ -f Your_Mail ]; then
+						fi
+			  			run_command $arg
+						if [ -f output/$Chat_Id/Your_Mail ]; then
 						curl -s -d "text=Hi, $Username, Here's Your Mail Update, $x" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
-						curl -s -F document=@"Your_Mail" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
-						rm -rf Your_Mail
+						curl -s -F document=@"output/$Chat_Id/Your_Mail" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
+						rm -rf output/$Chat_Id/Your_Mail
 						else
 						curl -s -d "text=There's Been An Issue With Your Request, Verify Your Credentials And Make Sure You Have Turned On Access For Less Secure Apps" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 						fi
+						else
+						case $(tr '[:upper:]' '[:lower:]' <<< $arg) in
+						"register")
+						if [ -f "./docs/creds/$Chat_Id/gmail_cred" ]; then
+						read -r this_user < ./docs/creds/$Chat_Id/gmail_cred
+						curl -s -d "text=Overwriting Credentials For $this_user" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+						fi
+						curl -s -d "text=What's Your Email?" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+						guser=$(get_updates response)
+						echo $(sed 's@|.*@@' <<< $guser | sed 's/[[:space:]]//g') > ./docs/creds/$Chat_Id/gmail_cred
+						mid=$(sed 's@.*|@@' <<< $guser | sed 's/[[:space:]]//g')
+						curl -s -d "text=Nice, Now What's Your Password?" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+						gpass=$(get_updates response)
+						echo $(sed 's@|.*@@' <<< $gpass | sed 's/[[:space:]]//g') >> ./docs/creds/$Chat_Id/gmail_cred
+						gpass_id=$(sed 's@.*|@@' <<< $gpass | sed 's/[[:space:]]//g')
+						curl -s -d "text=Twinkle Twinkle Little Star, How Would You Love A Date To The Spa .........., Oh Btw, Your Credentials Are Saved Already." -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+						for i in $mid $gpass_id
+							do
+								curl -s -d "message_id=$i" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/deleteMessage" >/dev/null 2>&1
+						done
+						;;
+						*) curl -s -d "text=That Ain't A Valid Argument, Use /help To See The Help Text For More Info On Usage" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;;
+						esac
 						fi
 						return
 					;;
@@ -90,17 +117,17 @@ check_valid(){
 				else
 				case $(tr '[:upper:]' '[:lower:]' <<< $arg) in
 				"register")
-				if [ -f "./docs/$Chat_Id-unilag_cred" ]; then
-				read -r this_user < ./docs/$Chat_Id-unilag_cred
-				curl -s -d "text=Overriding Credentials For $this_user" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				if [ -f "./docs/creds/$Chat_Id/unilag_cred" ]; then
+				read -r this_user < ./docs/creds/$Chat_Id/unilag_cred
+				curl -s -d "text=Overwriting Credentials For $this_user" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				fi
 				curl -s -d "text=What Is Your Username/Matric-Number?" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				unilag_user=$(get_updates response)
-				echo $(sed 's@|.*@@' <<< $unilag_user | sed 's/[[:space:]]//g') > ./docs/$Chat_Id-unilag_cred
+				echo $(sed 's@|.*@@' <<< $unilag_user | sed 's/[[:space:]]//g') > ./docs/creds/$Chat_Id/unilag_cred
 				user_id=$(sed 's@.*|@@' <<< $unilag_user | sed 's/[[:space:]]//g')
 				curl -s -d "text=Great, Now What's Your Password?" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				unilag_password=$(get_updates response)
-				echo $(sed 's@|.*@@' <<< $unilag_password | sed 's/[[:space:]]//g') >> ./docs/$Chat_Id-unilag_cred
+				echo $(sed 's@|.*@@' <<< $unilag_password | sed 's/[[:space:]]//g') >> ./docs/creds/$Chat_Id/unilag_cred
 				password_id=$(sed 's@.*|@@' <<< $unilag_password | sed 's/[[:space:]]//g')
 				curl -s -d "text=Skidaddle Skidoodle, Your Credentials Are Now Noodles %F0%9F%8D%9D .........., Just Kidding, Your Credentials Are Saved Already." -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				for i in $user_id $password_id
@@ -109,7 +136,7 @@ check_valid(){
 				done
 				;;
 				"courseform")
-				if [ ! -f "./docs/$Chat_Id-unilag_cred" ]; then
+				if [ ! -f "./docs/creds/$Chat_Id/unilag_cred" ]; then
 				curl -s -d "text=Whoops, You Don't Seem To Have Registered Your Credentials Yet, Use /unilag register To Get Started" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				return
 				fi
@@ -121,10 +148,10 @@ check_valid(){
 				x=$(sed 's@|.*@@' <<< $x | sed 's/[[:space:]]//g')
 				curl -s -d "text=Please Chillabit While I Go Fetch It. %F0%9F%8F%83%F0%9F%92%A8" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				run_command $x
-				if [ -f $Chat_Id-CourseRegistration.pdf ]; then
+				if [ -f output/$Chat_Id/CourseRegistration.pdf ]; then
 				curl -s -d "text=Got It, Here's Your Course Form %F0%9F%98%B8	" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
-				curl -s -F document=@"$Chat_Id-CourseRegistration.pdf" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
-				rm -rf $Chat_Id-CourseRegistration.pdf
+				curl -s -F document=@"output/$Chat_Id/CourseRegistration.pdf" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
+				rm -rf output/$Chat_Id/CourseRegistration.pdf
 				fi
 				;;
 				*) curl -s -d "text=That Definitely Is Not A Valid Argument, Use /help To See The Help Text For More Info On Usage" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;;
