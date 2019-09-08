@@ -3,6 +3,7 @@
 #Chat Id
 Chat_Id=$1
 set --
+
 [ ! -z $Chat_Id ] || {
 	echo "No Chat Id Specified, Exiting"
 	exit 1
@@ -20,11 +21,8 @@ commands=(
 )
 
 FIRSTRUN=0
-if [ -f $Chat_Id.lastupdate ]; then
-	firstime=1
-else
-	echo 0 > $Chat_Id.lastupdate
-	firstime=0
+if [ ! -f updates/$Chat_Id.lastupdate ]; then
+	echo 0 > updates/$Chat_Id.lastupdate
 fi
 
 echo -e "New Session Started For $Chat_Id......\n"
@@ -37,7 +35,7 @@ getUserDetails(){
     url="$(sed 's@\"@@g' <<< $1)"
     url="$(sed 's@.*chat\"\:@@' <<< $url | tr -d '}' | tr -d '{' | tr -d ']')"
     shift
-    echo $(sed 's@.*'$delim'\:@@' <<< "$url" | sed 's@\,.*@@')
+    echo $(sed 's@.*\<'$delim'\>\:@@' <<< "$url" | sed 's@\,.*@@')
 }
 run_command(){
 		${commands[$command]} $1
@@ -121,12 +119,12 @@ check_valid(){
 				curl -s -d "text=Choose A Session And Semester i.e The Number In Front Of The Choices" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				x=$(get_updates response)
 				x=$(sed 's@|.*@@' <<< $x | sed 's/[[:space:]]//g')
-				curl -s -d "text=Please Chillabit While I Go Fetch It." -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				curl -s -d "text=Please Chillabit While I Go Fetch It. %F0%9F%8F%83%F0%9F%92%A8" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				run_command $x
 				if [ -f $Chat_Id-CourseRegistration.pdf ]; then
-				curl -s -d "text=Got It, Here's Your Course Form" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
-				curl -s -F document=@"CourseRegistration.pdf" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
-				rm -rf CourseRegistration.pdf
+				curl -s -d "text=Got It, Here's Your Course Form %F0%9F%98%B8	" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				curl -s -F document=@"$Chat_Id-CourseRegistration.pdf" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
+				rm -rf $Chat_Id-CourseRegistration.pdf
 				fi
 				;;
 				*) curl -s -d "text=That Definitely Is Not A Valid Argument, Use /help To See The Help Text For More Info On Usage" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;;
@@ -134,7 +132,7 @@ check_valid(){
 				fi
 				return
 				;;
-	*"start"*) res=$(run_command $Username; if [ ! $(cat $Chat_Id.lastupdate) -gt 1 ]; then cat ./docs/help_text; fi); curl -s -d "text=$res" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1; return;;
+	*"start"*) res=$(run_command $Username; if [ ! $(cat updates/$Chat_Id.lastupdate) -gt 1 ]; then cat ./docs/help_text; fi); curl -s -d "text=$res" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1; return;;
 	*"help"*)  res=$(run_command $Username; cat ./docs/help_text); curl -s -d "text=$res" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1; return;;
 	*)	response=$(run_command $Username); curl -s -d "text=$response" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;return;;
 #			echo "$command Received, Running '${commands[$command]}'"
@@ -148,16 +146,12 @@ while :
 		NEW_MSG=$(curl --silent "https://api.telegram.org/bot$token/getUpdates" | sed '1d')
 		if [ ! -z "$NEW_MSG" ]; then
 		while read -r msg || [[ -n $msg ]]; do
-				if [ $firstime -eq 1 ]; then
-					read -r update < $Chat_Id.lastupdate
-				else
-					update=0
-				fi
+			read -r update < updates/$Chat_Id.lastupdate
 			msg_Chat_Id=$(getUserDetails id $msg)
 			if [ $msg_Chat_Id -eq $Chat_Id ]; then
 			MsgId=$(sed 's@.*message_id\"\:@@' <<< $msg | tr -d '}' | tr -d '{' | tr -d '\"' | tr -d ']' | sed 's|\,.*||')
 			if [ $MsgId -gt $update ]; then
-			echo $MsgId > $Chat_Id.lastupdate
+			echo $MsgId > updates/$Chat_Id.lastupdate
 			Username=$(getUserDetails first_name $msg)
 			Text=$(getUserDetails text "$msg")
 			LastMsgId=$(sed 's@.*message_id\"\:@@' <<< $msg | tr -d '}' | tr -d '{' | tr -d '\"' | tr -d ']' | sed 's|\,.*||')

@@ -3,7 +3,7 @@
 version=2.1
 
 #Bot Token
-export token="607618635:AAGTKwYHXPbu6WiUKJOP_Pql6rgR4hkRR38"
+export token="<Your Token Here>"
 
 #Check Interval
 export interval=3
@@ -44,8 +44,10 @@ if [ ! -z "$nw_msg" ]; then
 	while read -r msg || [[ -n $msg ]]; do
 		Chat_Id=$(getUserDetails id $msg)
 		if [ -z $(cat "./docs/UIDs" | grep  $Chat_Id) ]; then
+		user=$(getUserDetails first_name $msg)
 		echo "New Chat Id Found"
 		echo $Chat_Id >> "./docs/UIDs"
+		curl -s -d "text=$user Now Uses Your Bot......... Hurrah %F0%9F%8E%89" -d "chat_id=502979049" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 #		echo Start In Background Here
 		./dharmy_bot $Chat_Id &
 		fi
