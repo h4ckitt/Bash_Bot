@@ -24,6 +24,7 @@ FIRSTRUN=0
 if [ ! -f updates/$Chat_Id.lastupdate ]; then
 	echo 0 > updates/$Chat_Id.lastupdate
 fi
+[ -d docs/creds ] || mkdir docs/creds
 [ -d docs/creds/$Chat_Id ] || mkdir docs/creds/$Chat_Id
 [ -d output ] || mkdir output
 [ -d output/$Chat_Id ] || mkdir output/$Chat_Id
