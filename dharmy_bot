@@ -101,10 +101,10 @@ check_valid(){
 				else
 				curl -s -d "text=Your File Is Downloading, It Will Get Sent To You In A Moment" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				run_command $arg
-				if [ -f file.mp4 ]; then
+				if [ -f docs/$Chat_Id/file.mp4 ]; then
 				curl -s -F video=@"file.mp4" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendVideo" >/dev/null 2>&1
 				curl -s -d "text=Here You Go $Username" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
-				rm -rf file.mp4
+				rm -rf docs/$Chat_Id/file.mp4
 				else
 				curl -s -d "text=There's Been An Issue With Your Request, Verify The Link And Try Again" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				fi
@@ -130,6 +130,13 @@ check_valid(){
 				unilag_password=$(get_updates response)
 				echo $(sed 's@|.*@@' <<< $unilag_password | sed 's/[[:space:]]//g') >> ./docs/creds/$Chat_Id/unilag_cred
 				password_id=$(sed 's@.*|@@' <<< $unilag_password | sed 's/[[:space:]]//g')
+				verify=$(run_command verify)
+				if [ -z "$verify" ]; then
+					curl -s -d "text=Uhh, Those Creds Don't Seem To Be Valid. Please Try Registering Your Creds Again" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+					rm -rf docs/creds/$Chat_Id/unilag_cred
+					return
+				fi
+				curl -s -d "text=$verify" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				curl -s -d "text=Skidaddle Skidoodle, Your Credentials Are Now Noodles %F0%9F%8D%9D .........., Just Kidding, Your Credentials Are Saved Already." -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				for i in $user_id $password_id
 					do
@@ -142,7 +149,7 @@ check_valid(){
 				return
 				fi
 				run_command $arg
-				x=$(cat temp)
+				x=$(cat output/$Chat_Id/temp)
 				curl -s -d "text=$x" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				curl -s -d "text=Choose A Session And Semester i.e The Number In Front Of The Choices" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				x=$(get_updates response)
