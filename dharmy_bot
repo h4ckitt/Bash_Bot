@@ -32,7 +32,6 @@ fi
 echo -e "New Session Started For $Chat_Id......\n"
 echo ""
 LastMsgId=0
-prev_ChatId=0
 getUserDetails(){
     delim="$1"
     shift
@@ -112,6 +111,11 @@ check_valid(){
 				return
 				;;
 	*"unilag"*) arg=$(sed 's|.*unilag||' <<< $text | sed 's| ||')
+				status=$(run_command check)
+				[ "$status" == "Good" ] || {
+					curl -s -d "text=$status" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+					return
+				}
 				if [ -z $arg ]; then
 				curl -s -d "text=No Arguments Sent, Please Add An Argument Or Check The Help Text With /help And Try Again" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				return
