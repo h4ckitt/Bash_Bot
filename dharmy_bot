@@ -9,10 +9,8 @@ set --
 	exit 1
 	}
 declare -A commands
-commands=(
-		["myid"]="echo Your User ID is: @USERID"
-		["hi"]="echo Hello, $1"
-		["myuser"]="echo Your Username is: @USERNAME"
+commands=(		
+		["hi"]="echo Hello, $1"		
 		["fetchmail"]="./bin/mail_fetch"
 		["start"]="echo Hola, $1"
 		["help"]="echo Hiyah, $1"
@@ -164,6 +162,19 @@ check_valid(){
 				curl -s -d "text=Got It, Here's Your Course Form %F0%9F%98%B8	" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				curl -s -F document=@"output/$Chat_Id/CourseRegistration.pdf" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
 				rm -rf output/$Chat_Id/CourseRegistration.pdf
+				fi
+				;;
+				"biodata")
+				if [ ! -f "./docs/creds/$Chat_Id/unilag_cred" ]; then
+				curl -s -d "text=Whoops, You Don't Seem To Have Registered Your Credentials Yet, Use /unilag register To Get Started" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				return
+				fi
+				curl -s -d "text=I'll Be Right Back. %F0%9F%8F%83%F0%9F%92%A8" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				run_command $arg
+				if [ -f output/$Chat_Id/Biodata.pdf ]; then
+				curl -s -d "text=Oy, I Got Your Biodata %F0%9F%98%B8	" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				curl -s -F document=@"output/$Chat_Id/Biodata.pdf" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
+				rm -rf output/$Chat_Id/Biodata.pdf
 				fi
 				;;
 				*) curl -s -d "text=That Definitely Is Not A Valid Argument, Use /help To See The Help Text For More Info On Usage" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;;
