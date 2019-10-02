@@ -9,8 +9,8 @@ set --
 	exit 1
 	}
 declare -A commands
-commands=(		
-		["hi"]="echo Hello, $1"		
+commands=(
+		["hi"]="echo Hello, $1"
 		["fetchmail"]="./bin/mail_fetch"
 		["start"]="echo Hola, $1"
 		["help"]="echo Hiyah, $1"

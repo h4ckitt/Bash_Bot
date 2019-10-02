@@ -1,7 +1,8 @@
 #!/bin/bash
-
+getCreds(){
 username="$(sed '2d' ./docs/creds/$Chat_Id/unilag_cred)"
 pass="$(sed '1d' ./docs/creds/$Chat_Id/unilag_cred)"
+}
 
 check(){
     status_code=$(curl -o /dev/null -s -w "%{http_code}\n" "http://studentportal.unilag.edu.ng/(S(lkynzhoc3fox21jdy343vwl0))/default.aspx")
@@ -13,6 +14,7 @@ check(){
 }
 
 details(){
+getCreds
 url=$(curl -s "http://studentportal.unilag.edu.ng/(S(lkynzhoc3fox21jdy343vwl0))/default.aspx")
 declare -i counter=1
 while read -r line || [[ -n $line ]]
@@ -60,7 +62,7 @@ rm -rf output/$Chat_Id/temp
 fi
 fi
 
-case $1 in 
+case $1 in
     "verify")
     details
     curl -s -L -H "Cookie: $cookie" -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" -H "Accept-Encoding: " -H "Accept-Langauge: en-US,en;q=0.5" -H "Connection: keep-alive" -H "Host: studentportal.unilag.edu.ng" -H "Upgrade-Insecure-Requests: 1" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"  "http://studentportal.unilag.edu.ng$urrl/StudentHomePage.aspx" > output/$Chat_Id/stuff.html
