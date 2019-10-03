@@ -3,11 +3,16 @@
 #Chat Id
 Chat_Id=$1
 set --
-
+declare -i inval=0
 [ ! -z $Chat_Id ] || {
 	echo "No Chat Id Specified, Exiting"
 	exit 1
 	}
+invalid_responses=("Say What Now" "Sorry?" "What?" "I Dont Understand That" "Retry With Something I Understand" "I Don't Get You" "Uhh, What?" "I'm Sorry I Didn't Get That")
+for i in ${invalid_responses[@]};
+	do
+		inval+=1
+done
 declare -A commands
 commands=(
 		["hi"]="echo Hello, $1"
@@ -189,7 +194,9 @@ check_valid(){
 		esac
 	fi
 done
+curl -s -d "text=${invalid_responses[((RANDOM%inval))]}" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 }
+
 get_updates(){
 while :
 	do
