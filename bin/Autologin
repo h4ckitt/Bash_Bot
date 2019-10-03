@@ -1,9 +1,4 @@
 #!/bin/bash
-getCreds(){
-username="$(sed '2d' ./docs/creds/$Chat_Id/unilag_cred)"
-pass="$(sed '1d' ./docs/creds/$Chat_Id/unilag_cred)"
-}
-
 check(){
     status_code=$(curl -o /dev/null -s -w "%{http_code}\n" "http://studentportal.unilag.edu.ng/(S(lkynzhoc3fox21jdy343vwl0))/default.aspx")
     [ $status_code -eq 302 ] || {
@@ -14,7 +9,8 @@ check(){
 }
 
 details(){
-getCreds
+username="$(sed '2d' ./docs/creds/$Chat_Id/unilag_cred)"
+pass="$(sed '1d' ./docs/creds/$Chat_Id/unilag_cred)"
 url=$(curl -s "http://studentportal.unilag.edu.ng/(S(lkynzhoc3fox21jdy343vwl0))/default.aspx")
 declare -i counter=1
 while read -r line || [[ -n $line ]]
