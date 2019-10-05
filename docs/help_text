@@ -4,3 +4,4 @@ Here's A List Of Commands You Can Run:
 /tikdown <link> - Downloads The Video From The Specified Link From Tiktok's Servers
 /unilag register - Registers Your Unilag Student Portal Credentials
 /unilag courseform - Fetches Your Course Form With The Pre-Registered Credentials
+/unilag biodata - Fetches Your Biodata With The Pre-Registered Credentials
