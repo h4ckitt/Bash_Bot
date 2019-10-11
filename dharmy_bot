@@ -189,10 +189,11 @@ check_valid(){
 				fi
 				curl -s -d "text=I'll Be Right Back. This Might Take A While %F0%9F%8F%83%F0%9F%92%A8" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				run_command $arg
-				if [ -f output/$Chat_Id/Docket.pdf ]; then
+				if [ -f output/$Chat_Id/Docket.zip ]; then
 				curl -s -d "text=I Got Your Docket %F0%9F%98%B8	" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
-				curl -s -F document=@"output/$Chat_Id/Docket.pdf" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
-#				rm -rf output/$Chat_Id/Docket.pdf
+				curl -s -d "text=I'm Sorry, Due To Logistic Issues, Your Docket Has Been Sent As A Zip File. %F0%9F%98%AA" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
+				curl -s -F document=@"output/$Chat_Id/Docket.zip" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
+				rm -rf output/$Chat_Id/Docket.zip
 				fi
 				;;
 				*) curl -s -d "text=That Definitely Is Not A Valid Argument, Use /help To See The Help Text For More Info On Usage" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;;
