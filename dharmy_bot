@@ -194,6 +194,7 @@ check_valid(){
 				curl -s -d "text=I'm Sorry, Due To Logistic Issues, Your Docket Has Been Sent As A Zip File. %F0%9F%98%AA" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1
 				curl -s -F document=@"output/$Chat_Id/Docket.zip" -F "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendDocument" >/dev/null 2>&1
 				rm -rf output/$Chat_Id/Docket.zip
+				rm -rf output/$Chat_Id/Docket.pdf
 				fi
 				;;
 				*) curl -s -d "text=That Definitely Is Not A Valid Argument, Use /help To See The Help Text For More Info On Usage" -d "chat_id=$Chat_Id" "https://api.telegram.org/bot$token/sendMessage" >/dev/null 2>&1;;

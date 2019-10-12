@@ -35,11 +35,12 @@ Attempt(){
     [ ! -z "$(grep questionnaire output/$Chat_Id/proceed)" ]||{
         [ $count -gt 1 ]||{
             mv output/$Chat_Id/proceed output/$Chat_Id/Docket.pdf
-            zip -r output/$Chat_Id/Docket.zip output/$Chat_Id/Docket.pdf
+            zip -j -r Docket/output/502979049/Docket.zip Docket/output/502979049/Docket.pdf
             signal=1
             return
         }
         generate
+        zip -j -r Docket/output/502979049/Docket.zip Docket/output/502979049/Docket.pdf
         signal=1
         return
     }
