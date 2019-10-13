@@ -228,15 +228,13 @@ case $1 in
     curl -s -L -H "Cookie: $cookie" -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" -H "Accept-Encoding: " -H "Accept-Langauge: en-US,en;q=0.5" -H "Connection: keep-alive" -H "Host: studentportal.unilag.edu.ng" -H "Upgrade-Insecure-Requests: 1" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"  "http://studentportal.unilag.edu.ng$urrl/PrintBiodataPage.aspx" -o output/$Chat_Id/Biodata.pdf
     ;;
     "docket")
-    details
-    declare count=0
-while [ ! $count -eq 4 ]; do
+    details    
+while : ; do
     Attempt
     [ $signal != 1 ]||{        
         break
         exit 0
-    }
-    count+=1
+    }    
 done
     ;;
 esac
